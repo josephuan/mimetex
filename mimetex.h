@@ -42,41 +42,15 @@
  * 09/06/08	J.Forkosh	Version 1.70 released.
  *
  ***************************************************************************/
+ #define INITVALS
+ #define DRIVER
+ #define TEXFONTS
 
-
-/* --------------------------------------------------------------------------
-check for compilation by parts (not supported yet)
--------------------------------------------------------------------------- */
-/* --- check for (up to) five parts --- */
-#if defined(PART1) || defined(PART2) || defined(PART3) \
-||  defined(PART4) || defined(PART5)
-  #define PARTS
-#endif
-/* --- default STATIC=static, else set up static for parts --- */
-#if defined(PARTS)
-  #if defined(PART1)
-    #define INITVALS
-    #define STATIC /* not static */
-  #else
-    #define STATIC extern
-  #endif
-#else
-  #define INITVALS
-  #if defined(DRIVER)
-    #define STATIC static
-  #else
-    #define STATIC static /* not static (won't work) */
-  #endif
-#endif
+#define STATIC static
 /* --- declare global symbol --- */
-#ifdef INITVALS
-  #define GLOBAL(type,variable,value) STATIC type variable = value
-  /* #define GLOBAL(type,variable,value) STATIC type variable = (value) */
-  /* #define SHARED(type,variable,value) type variable = (value) */
-#else
-  #define GLOBAL(type,variable,value) STATIC type variable
-  /* #define SHARED(type,variable,value) STATIC type variable */
-#endif
+
+#define GLOBAL(type,variable,value) STATIC type variable = value
+
 
 
 /* -------------------------------------------------------------------------
@@ -141,11 +115,9 @@ Raster structure (bitmap or bytemap, along with its width and height in bits)
 /* --- #if !defined(UNSIGNEDCHAR) && !defined(SIGNEDCHAR)
           #define SIGNEDCHAR
        #endif --- */
-#ifndef	SIGNEDCHAR
-  #define pixbyte  unsigned char
-#else
-  #define pixbyte  char
-#endif
+
+#define pixbyte  unsigned char
+
 /* --- raster structure --- */
 #define	raster	struct raster_struct	/* "typedef" for raster_struct*/
 raster
@@ -302,15 +274,11 @@ mathchardef
 /* ---
  * font family information
  * ----------------------- */
-STATIC	int  nfontinfo			/* legal font#'s are 1...nfontinfo */
-#ifdef INITVALS
-  = 11
-#endif
-  ;
+STATIC	int  nfontinfo	=11; 		/* legal font#'s are 1...nfontinfo */
+
 STATIC	struct {char *name; int family; int istext; int class;}
   /* note: class(1=upper,2=alpha,3=alnum,4=lower,5=digit,9=all) now unused */
   fontinfo[]
-#ifdef INITVALS
   = {/* --- name family istext class --- */
     { "\\math",	   0,       0,  0 }, /*(0) default math mode */
     { "\\mathcal", CMSY10,  0,  1 }, /*(1) calligraphic, uppercase */
@@ -325,7 +293,6 @@ STATIC	struct {char *name; int family; int istext; int class;}
     { "\\textbfgreek",CMMI10BGR,1,-1 },/*(10)\textbfgreek{ab}-->\alpha\beta*/
     { "\\textbbgreek",BBOLD10GR,1,-1 },/*(11)\textbbgreek{ab}-->\alpha\beta*/
     {  NULL,	   0,       0,  0 } }
-#endif
   ; /* --- end-of-fonts[] --- */
 
 /* ---
@@ -335,22 +302,12 @@ STATIC	struct {char *name; int family; int istext; int class;}
        normalsize=4,large=5,Large=6,LARGE=7,huge=8,Huge=9,HUGE=10 --- */
 /* --- (mimeTeX adds HUGE) --- */
 #define	LARGESTSIZE	(10)
-#ifdef DEFAULTSIZE
-  #ifndef NORMALSIZE
-    #define NORMALSIZE (DEFAULTSIZE)
-  #endif
-#endif
-#ifndef	NORMALSIZE
-  /*#define NORMALSIZE	(2)*/
-  /*#define NORMALSIZE	(3)*/
-  #define NORMALSIZE	(4)
-#endif
-#ifndef	DISPLAYSIZE
-  /* --- automatically sets scripts in \displaystyle when fontsize>= --- */
-  /*#define DISPLAYSIZE	(NORMALSIZE+1)*/
-  /*#define DISPLAYSIZE	(3)*/
-  #define DISPLAYSIZE	(4)
-#endif
+
+#define NORMALSIZE	(4)
+
+
+#define DISPLAYSIZE	(4)
+
 
 /* ---
 aspect ratio is width/height of the displayed image of a pixel
@@ -366,7 +323,6 @@ aspect ratio is width/height of the displayed image of a pixel
  * space between adjacent symbols, e.g., symspace[RELATION][VARIABLE]
  * ------------------------------------------------------------------ */
 STATIC	int symspace[11][11]
-#ifdef INITVALS
  =
  { /* -----------------------------------------------------------------------
          Right... ORD OPER  BIN  REL OPEN CLOS PUNC  VAR DISP SPACE unused
@@ -382,9 +338,7 @@ STATIC	int symspace[11][11]
   /*DISPOPER*/	{  2,   3,   3,   5,   2,   3,   2,   2,   2,   0,    0 },
  /*SPACEOPER*/	{  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,    0 },
     /*unused*/	{  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,    0 }
- }
-#endif
- ; /* --- end-of-symspace[][] --- */
+ } ; /* --- end-of-symspace[][] --- */
 
 
 /* -------------------------------------------------------------------------
@@ -441,21 +395,20 @@ fontfamily
 /* -------------------------------------------------------------------------
 S t a t i c   F o n t   D a t a   u s e d   b y   M i m e t e x
 -------------------------------------------------------------------------- */
-#ifdef TEXFONTS
+
 /* ---
  * font info generated for us by gfuntype
  * -------------------------------------- */
-#ifdef INITVALS
-  #include "texfonts.h"
-#endif
+
+ #include "texfonts.h"
+
 
 /* ---
  * font families (by size), just a table of preceding font info
  * ------------------------------------------------------------ */
 /* --- for low-pass anti-aliasing --- */
 STATIC	fontfamily aafonttable[]
-#ifdef INITVALS
- =
+=
  {/* -----------------------------------------------------------------------------------------
     family     size=0,        1,        2,        3,        4,        5,
                     6,        7,        8,        9,	   10
@@ -487,86 +440,54 @@ STATIC	fontfamily aafonttable[]
   {    -999,{    NULL,     NULL,     NULL,     NULL,     NULL,     NULL,
                  NULL,     NULL,     NULL,     NULL,     NULL}}
  }
-#endif
  ; /* --- end-of-aafonttable[] --- */
 
 /* --- for super-sampling anti-aliasing --- */
-#ifdef SSFONTS
- STATIC fontfamily ssfonttable[]
- #ifdef INITVALS
-  =
-  {/* -----------------------------------------------------------------------------------------
-    family     size=0,        1,        2,        3,        4,        5,
-                    6,        7,        8,        9,       10
-   ----------------------------------------------------------------------------------------- */
-   {  CMR10,{  cmr250,  cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200,
-              cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200}},
-   { CMMI10,{ cmmi250,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,
-              cmmi210,  cmmi250,  cmmi325,  cmmi450,  cmmi600}},
-   {CMMIB10,{cmmib250, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180,
-             cmmib210, cmmib250, cmmib325, cmmib450, cmmib600}},
-   { CMSY10,{ cmsy250,  cmsy100,  cmsy118,  cmsy131,  cmsy160,  cmsy180,
-              cmsy210,  cmsy250,  cmsy325,  cmsy450,  cmsy600}},
-   { CMEX10,{ cmex250,  cmex100,  cmex118,  cmex131,  cmex160,  cmex180,
-              cmex210,  cmex250,  cmex325,  cmex450,  cmex600}},
-   { RSFS10,{ rsfs250,  rsfs100,  rsfs118,  rsfs131,  rsfs160,  rsfs180,
-              rsfs210,  rsfs250,  rsfs325,  rsfs450,  rsfs600}},
-  { BBOLD10,{bbold250, bbold100, bbold118, bbold131, bbold160, bbold180,
-             bbold210, bbold250, bbold325, bbold450, bbold600}},
- {STMARY10,{stmary250,stmary100,stmary118,stmary131,stmary160,stmary180,
-            stmary210,stmary250,stmary325,stmary450,stmary600}},
-  {   CYR10,{wncyr250, wncyr100, wncyr118, wncyr131, wncyr160, wncyr180,
-             wncyr210, wncyr250, wncyr325, wncyr450, wncyr600}},
-  {CMMI10GR,{ cmmi250,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,
-              cmmi210,  cmmi250,  cmmi325,  cmmi450,  cmmi600}},
- {CMMI10BGR,{cmmib250, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180,
-             cmmib210, cmmib250, cmmib325, cmmib450, cmmib600}},
- {BBOLD10GR,{bbold250, bbold100, bbold118, bbold131, bbold160, bbold180,
-             bbold210, bbold250, bbold325, bbold450, bbold600}},
-   {   -999,{    NULL,     NULL,     NULL,     NULL,     NULL,     NULL,
-                 NULL,     NULL,     NULL,     NULL,     NULL}}
-  }
- #endif
-  ; /* --- end-of-ssfonttable[] --- */
-#else
- /*GLOBAL(fontfamily,ssfonttable[],dummyfonttable);*/
- STATIC fontfamily ssfonttable[]
- #ifdef INITVALS
-  = dummyfonttable
- #endif
-  ;
-#endif  /* #ifdef SSFONTS */
-#else
- /*GLOBAL(fontfamily,aafonttable[],dummyfonttable);*/
- /*GLOBAL(fontfamily,ssfonttable[],dummyfonttable);*/
- STATIC fontfamily
-	aafonttable[]
-	#ifdef INITVALS
-	 = dummyfonttable
-	#endif
-	,
-	ssfonttable[]
-	#ifdef INITVALS
-	 = dummyfonttable
-	#endif
-	;
-#endif  /* #ifdef TEXFONTS */
+STATIC fontfamily ssfonttable[] = dummyfonttable;
 
-/* --- select current font table (for lowpass or supersampling) --- */
-#ifndef ISSUPERSAMPLING
-  #define ISSUPERSAMPLING 0
-#endif
+
+
 GLOBAL(fontfamily,*fonttable,(ISSUPERSAMPLING?ssfonttable:aafonttable));
 
 /* --- supersampling shrink factors corresponding to displayed sizes --- */
 STATIC	int shrinkfactors[]		/*supersampling shrinkfactor by size*/
-#ifdef INITVALS
  =
     {  3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
   /*{ 15,13,11, 9, 7, 5, 3, 1 }*/
-#endif
  ;
 
+
+ struct Data_Info
+{
+	char* substring;
+	int top;
+	int left;
+	int height;
+	int width;
+	int Box_width;
+	int Box_height;
+};
+
+
+struct Result_Data
+{
+	struct Data_Info* Location;
+	intbyte* ImageData;
+	int width;
+	int height;
+};
+//struct Result_Data* CreateGifFromEq(char *expression, char *gifFileName);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#if defined(_USRDLL)
+	extern _declspec(dllexport)struct Result_Data*
+		CreateGifFromEq(char *expression, char *gifFileName);
+#endif
+#ifdef __cplusplus
+}
+#endif
 /* ---
  * handler functions for math operations
  * ------------------------------------- */
@@ -646,7 +567,6 @@ subraster *rastnoop();			/* handle \escape's to be flushed */
  * mathchardefs for symbols recognized by mimetex
  * ---------------------------------------------- */
 STATIC	mathchardef symtable[]
-#ifdef INITVALS
  =
  {
     /* ---------- c o m m a n d  h a n d l e r s --------------
@@ -2252,7 +2172,6 @@ STATIC	mathchardef symtable[]
     /* --- trailer record --- */
     { NULL,		-999,	-999,	-999,		NULL }
  }
-#endif /* INITVALS */
  ; /* --- end-of-symtable[] --- */
 
 /* ======================= END-OF-FILE MIMETEX.H ========================= */
