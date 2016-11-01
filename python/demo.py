@@ -16,6 +16,7 @@ See README.md for installation instructions before running.
 import matplotlib.pyplot as plt
 import cv2
 from parser import *
+import Image
 
 def vis_symbols(im, symbols_data):
 
@@ -56,16 +57,22 @@ if __name__ == '__main__':
 
     parser = Parser()
 
-    symbols_render_str=parser.parse('a+b=c')
+    symbols_render_str=parser.parse('\int^{a}_{-a}a+b=0')
 
     '''load data as a list'''
-    bboxes = symbols_render_str.split(';')
+    symbol_infos = symbols_render_str.split(';')
     bboxes_ = []
-    for bbox in bboxes:
+    for i, symbol_info in enumerate(symbol_infos):
+
+
+        symbol_info_ = symbol_info.split(',')
+
         try:
+            bbox=symbol_info_[1]
             left, top, width, height, Box_width, Box_height = bbox.split(' ')
         except:
             continue;
+
         bbox_ = [int(left), int(top),int(width), int(height),int(Box_width), int(Box_height)]
         bboxes_.append(bbox_)
 

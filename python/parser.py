@@ -26,5 +26,5 @@ class Parser(object):
 if __name__ == '__main__':
     parser = Parser()
 
-    print parser.parse('a+b=c')
+    print parser.parse('\int_{-a}^{a}a+b=0')
 

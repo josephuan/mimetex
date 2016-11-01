@@ -466,7 +466,7 @@ static	char *msgtable[] = {		/* messages referenced by [index] */
 additional symbols
 -------------------------------------------------------------------------- */
 /* ---
- * windows-specific header info
+ * windows-specific header infoŔ
  * ---------------------------- */
 #ifndef WINDOWS			/* -DWINDOWS not supplied by user */
   #if defined(_WINDOWS) || defined(_WIN32) || defined(WIN32) \
@@ -553,7 +553,7 @@ additional symbols
 
 /* --- opaque background (default to transparent) --- */
 
-  #define ISTRANSPARENT 1
+  #define ISTRANSPARENT 0
 
 
 /* ---
@@ -17771,30 +17771,44 @@ char*  CreateGifFromEq ( char *expression, char *gifFileName )
 			, NULL
 		) ;
 
-	char parse_result[4096]="", line_str[1024];
+	char parse_result[4096], line_str[1024];
 
 	struct Data_Info *DataROI=symbols_data->Location;
 
 
 	int ii;
+	int first_write=1;
+
+	char last_string[1024];
 
 	for(ii = 0; ii < symbols_data->Data_Info_Num; ii++)
 	{
-		//sprintf(line_str, "%s ", DataROI[ii].substring);
-		//strcat(parse_result, line_str);
+        if(DataROI[ii].left > -1 && DataROI[ii].left < 10000)
+        {
+            if(first_write)
+            {
+                sprintf(parse_result, "%s,", DataROI[ii].substring);
 
-		if(DataROI[ii].left > -1 && DataROI[ii].left < 10000)
-		{
+                strcpy(last_string, DataROI[ii].substring);
 
-		    if(0==ii)
-		        sprintf(parse_result, "%d %d %d %d %d %d;", DataROI[ii].left, DataROI[ii].top, DataROI[ii].width, DataROI[ii].height, DataROI[ii].Box_width, DataROI[ii].Box_height);
+                first_write=0;
+            }
             else
             {
-                sprintf(line_str, "%d %d %d %d %d %d;", DataROI[ii].left, DataROI[ii].top, DataROI[ii].width, DataROI[ii].height, DataROI[ii].Box_width, DataROI[ii].Box_height);
-                strcat(parse_result,line_str);
-            }
-		}
+                // check if neighbours are same with symbol string,
+                // then ignore the later one
+                if(!strcmp(last_string, DataROI[ii].substring))
+                    continue;
 
+                sprintf(line_str, "%s,", DataROI[ii].substring);
+                strcat(parse_result,line_str);
+
+                strcpy(last_string, DataROI[ii].substring);
+            }
+
+            sprintf(line_str, "%d %d %d %d %d %d;", DataROI[ii].left, DataROI[ii].top, DataROI[ii].width, DataROI[ii].height, DataROI[ii].Box_width, DataROI[ii].Box_height);
+            strcat(parse_result,line_str);
+        }
 	}
 
 	return parse_result;
