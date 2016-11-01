@@ -16686,13 +16686,21 @@ void free_memory(struct Data_Info* DataROI)
 	free(DataROI);
 }
 
+#ifdef DEBUG
+
+/* --- entry point --- */
+int	main ( int argc, char *argv[]
+	    , char *envp[]
+	)
+#else
 /* --- entry point --- */
 struct Result_Data*	main_func ( int argc, char *argv[]
 	    , char *envp[]
 	)
+#endif // DEBUG
 {
 
-	ffpp = fopen("d:\\test.txt", "w");
+	ffpp = fopen("./test.txt", "w");
 
 /* -------------------------------------------------------------------------
 Allocations and Declarations
@@ -17378,6 +17386,8 @@ if ( !isdumpimage && !ispbmpgm )	/* don't mix ascii with image dump */
 		printf("\n");
 	}
 
+	Result_Out->Data_Info_Num=Index_Data;
+
 	//free_memory(DataROI);
 
 	if(sp->image)
@@ -17539,7 +17549,7 @@ if ( (!isquery||isqlogging) || msglevel >= 99 )	/*command line or debuging*/
 	type_bytemap(bytemap_raster,grayscale,
         raster_width,raster_height,msgfp); }
     /* --- colormap image --- */
-    fprintf(msgfp,"\nHex dump of colormap indexes, "  /* emit colormap */
+    fprintf(msgfp,"\nHex dump of colormapResult_Out indexes, "  /* emit colormap */
       "asterisks denote \"black\" bytes (index=%d)...\n",ncolors-1);
     type_bytemap(colormap_raster,ncolors,
     raster_width,raster_height,msgfp);
@@ -17698,7 +17708,12 @@ end_of_job:
 	Result_Out->Location = DataROI;
 	//Result_Out->ImageData = bytemap_raster;
 
+#ifdef DEBUG
+    return 0;
+#else
 	return Result_Out;
+#endif
+
 
 } /* --- end-of-function main() --- */
 
@@ -17728,6 +17743,64 @@ end_of_job:
 //	CreateGifFromEq ( char *expression, char *gifFileName );
 //#endif
 /* --- entry point --- */
+
+#ifndef DEBUG
+#ifdef FOR_PYTHON_IMPLEMENT
+char*  CreateGifFromEq ( char *expression, char *gifFileName )
+{
+	/* -------------------------------------------------------------------------
+	Allocations and Declarations
+	-------------------------------------------------------------------------- */
+//	struct Result_Data*	main();			/* main() akways returns an int */
+
+	/* --- set constants --- */
+	int	argc = 4;		/* count of args supplied to main() */
+	char	*argv[5] =		/* command line args to run with -e option */
+		  { "MimeTeXWin32DLL", "-e", /* constant args */
+			/*gifFileName, expression,*/ NULL, NULL, NULL };
+	/* --- set argv[]'s not computable at load time --- */
+	argv[2] = gifFileName;		/* args are -e gifFileName */
+	argv[3] = expression;		/* and now  -e gifFileName expression */
+	/* -------------------------------------------------------------------------
+	Run mimeTeX in command-line mode with -e (export) option, and then return
+	-------------------------------------------------------------------------- */
+	printf("test_1\n");
+
+
+	struct Result_Data	*symbols_data=main_func ( argc, argv
+			, NULL
+		) ;
+
+	char parse_result[4096]="", line_str[1024];
+
+	struct Data_Info *DataROI=symbols_data->Location;
+
+
+	int ii;
+
+	for(ii = 0; ii < symbols_data->Data_Info_Num; ii++)
+	{
+		//sprintf(line_str, "%s ", DataROI[ii].substring);
+		//strcat(parse_result, line_str);
+
+		if(DataROI[ii].left > -1 && DataROI[ii].left < 10000)
+		{
+
+		    if(0==ii)
+		        sprintf(parse_result, "%d %d %d %d %d %d;", DataROI[ii].left, DataROI[ii].top, DataROI[ii].width, DataROI[ii].height, DataROI[ii].Box_width, DataROI[ii].Box_height);
+            else
+            {
+                sprintf(line_str, "%d %d %d %d %d %d;", DataROI[ii].left, DataROI[ii].top, DataROI[ii].width, DataROI[ii].height, DataROI[ii].Box_width, DataROI[ii].Box_height);
+                strcat(parse_result,line_str);
+            }
+		}
+
+	}
+
+	return parse_result;
+
+} /* --- end-of-function CreateGifFromEq() --- */
+#else
 struct Result_Data* CreateGifFromEq ( char *expression, char *gifFileName )
 {
 	/* -------------------------------------------------------------------------
@@ -17747,11 +17820,14 @@ struct Result_Data* CreateGifFromEq ( char *expression, char *gifFileName )
 	Run mimeTeX in command-line mode with -e (export) option, and then return
 	-------------------------------------------------------------------------- */
 	printf("test_1\n");
+
+
 	return	main_func ( argc, argv
 			, NULL
 		) ;
 } /* --- end-of-function CreateGifFromEq() --- */
-
+#endif
+#endif
 
 /* ==========================================================================
  * Function:	ismonth ( char *month )

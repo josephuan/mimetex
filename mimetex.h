@@ -24,7 +24,7 @@
  *
  * Purpose:	Structures, macros, symbols,
  *		and static font data for mimetex (and friends)
- * 
+ *
  * Source:	mimetex.h
  *
  * Notes:     o	#define TEXFONTS before #include "mimetex.h"
@@ -471,6 +471,7 @@ STATIC	int shrinkfactors[]		/*supersampling shrinkfactor by size*/
 
 struct Result_Data
 {
+    int Data_Info_Num;
 	struct Data_Info* Location;
 	intbyte* ImageData;
 	int width;
