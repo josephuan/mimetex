@@ -466,7 +466,7 @@ static	char *msgtable[] = {		/* messages referenced by [index] */
 additional symbols
 -------------------------------------------------------------------------- */
 /* ---
- * windows-specific header infoÅ”
+ * windows-specific header info
  * ---------------------------- */
 #ifndef WINDOWS			/* -DWINDOWS not supplied by user */
   #if defined(_WINDOWS) || defined(_WIN32) || defined(WIN32) \
@@ -500,7 +500,6 @@ additional symbols
   #define ISWINDOWS 0
   #endif
 #endif
-
 
 /* ---
  * check for supersampling or low-pass anti-aliasing
@@ -553,7 +552,7 @@ additional symbols
 
 /* --- opaque background (default to transparent) --- */
 
-  #define ISTRANSPARENT 0
+  #define ISTRANSPARENT 1
 
 
 /* ---
@@ -598,9 +597,6 @@ adjustable default values
 
   #define MAXADJACENT 8			/*anti-aliasing maxadjacent default*/
 
-
-
-
 /* --- variables for anti-aliasing parameters --- */
 GLOBAL(int,centerwt,CENTERWT);		/*lowpass matrix center pixel wt */
 GLOBAL(int,adjacentwt,ADJACENTWT);	/*lowpass matrix adjacent pixel wt*/
@@ -636,7 +632,6 @@ STATIC int patternnumcount0[99], patternnumcount1[99], /*aalookup() counts*/
 /* -------------------------------------------------------------------------
 other variables
 -------------------------------------------------------------------------- */
-
 /* --- black on white background (default), or white on black --- */
 
   #define ISBLACKONWHITE 1		/* black on white background */
@@ -1217,6 +1212,19 @@ if ( rp != NULL )			/* nothing to copy if ptr null */
 return ( newrp );			/* return copied raster to caller */
 } /* --- end-of-function rastcpy() --- */
 
+// huanwang
+// dump subraster info
+void subrast_print ( subraster *sp )
+{
+#ifdef ENABLE_SUBRAST_PRINT
+    if(sp && sp->symdef)
+        printf("subrast_print: %s     cordination:(%d, %d)    %d  %d\n", sp->symdef->symbol, \
+               sp->baseline, sp->baseline, sp->image->width, sp->image->height);
+#else
+               ;
+#endif //ENABLE_SUBRAST_PRINT
+
+}
 
 /* ==========================================================================
  * Function:	subrastcpy ( sp )
@@ -1518,7 +1526,8 @@ if ( axis==1 || axis==2 )		/* first validate axis arg */
 return ( reflected );			/*return reflected raster to caller*/
 } /* --- end-of-function rastref() --- */
 
-
+//huanwang
+//in each rastxxx, if rastput, overlay current rast result to target
 /* ==========================================================================
  * Function:	rastput ( target, source, top, left, isopaque )
  * Purpose:	Overlays source onto target,
@@ -1581,6 +1590,15 @@ else
 Back to caller with 1=okay, 0=failed.
 -------------------------------------------------------------------------- */
 end_of_job:
+
+#ifdef ENABLE_RASTPUT_PRINT
+// by huanwang
+    // collect info(cordination, pixelmap) of current rast result
+    if(isokay)
+        printf("rastput_print: %s     cordination:(%d, %d)    %d  %d\n", "rastput", \
+        left, top, source->width, source->height);
+#endif // ENABLE_SUBRAST_PRINT
+
   return ( isokay /*isfatal? (tpix<ntpix? 1:0) : 1*/ );
 } /* --- end-of-function rastput() --- */
 
@@ -1739,6 +1757,10 @@ if ( isfree > 0 )			/* caller wants input freed */
 Back to caller with pointer to concatted subraster or with null for error
 -------------------------------------------------------------------------- */
 end_of_job:
+// huanwang
+  // dump subraster info
+  subrast_print ( sp );
+
   return ( sp );			/* back with subraster or null ptr */
 } /* --- end-of-function rastcompose() --- */
 
@@ -1942,7 +1964,7 @@ subraster *rastcat ( subraster *sp1, subraster *sp2, int isfree )
 		{
 			str = "Box";
 		}
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, max2(0,nsmash-width1), base-base1, sp1->image->width, sp1->image->height, rp->width, rp->height);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, max2(0,nsmash-width1), base-base1, sp1->image->width, sp1->image->height, rp->width, rp->height);
 		DataROI[Index_Data].substring = str;
 		DataROI[Index_Data].left = max2(0,nsmash-width1);
 		DataROI[Index_Data].top = base-base1;
@@ -1975,7 +1997,7 @@ subraster *rastcat ( subraster *sp1, subraster *sp2, int isfree )
 		{
 			str1 = "Box";
 		}
-		//printf("%s     ï¿½Ò±ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str1, max2(0,width1+space-nsmash), base-base2, sp2->image->width, sp2->image->height, rp->width, rp->height);
+		//printf("%s     ÓÒ±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str1, max2(0,width1+space-nsmash), base-base2, sp2->image->width, sp2->image->height, rp->width, rp->height);
 		DataROI[Index_Data].substring = str1;
 		DataROI[Index_Data].left = max2(0,width1+space-nsmash);
 		DataROI[Index_Data].top = base-base2;
@@ -2024,6 +2046,10 @@ subraster *rastcat ( subraster *sp1, subraster *sp2, int isfree )
 	//printf("\n");
 	end_of_job:
 		smashmargin = oldsmashmargin;		/* reset original smashmargin */
+
+// huanwang
+  // dump subraster info
+    subrast_print ( sp );
 
 	return ( sp );			/* back with subraster or null ptr */
 } /* --- end-of-function rastcat() --- */
@@ -2130,6 +2156,10 @@ subraster *rastack ( subraster *sp1, subraster *sp2,
 	Back to caller with pointer to stacked subraster or with null for error
 	-------------------------------------------------------------------------- */
 	end_of_job:
+
+	// huanwang
+  // dump subraster info
+    subrast_print ( sp );
 
 	return ( sp );			/* back with subraster or null ptr */
 } /* --- end-of-function rastack() --- */
@@ -7249,7 +7279,7 @@ subraster *rasterize ( char *expression, int size )
 	double	oldunitlength = unitlength;	/* initial unitlength */
 	mathchardef *oldleftsymdef = leftsymdef; /* init oldleftsymdef */
 
-	//printf("\n         ï¿½á¹¹%d         \n", count__++);
+	//printf("\n         ½á¹¹%d         \n", count__++);
 
 	/* -------------------------------------------------------------------------
 	initialization
@@ -7325,13 +7355,13 @@ subraster *rasterize ( char *expression, int size )
 		if ( *subexpr == '\000' )
 			break;
 
-		//=========================ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½Ç·ï¿½ï¿½Ç´ï¿½ï¿½ï¿½ï¿½ï¿½========================================
+		//=========================¼ì²é¸Ã×Ö·ûÊÇ·ñÊÇ´óÀ¨ºÅ========================================
 		if ( isbrace(subexpr,LEFTBRACES,1) )	/* got parenthesized subexpression */
 		{
-			if ( (sp=rastparen(&subexpr,size,prevsp)) == NULL )//ï¿½ï¿½Õ¤ï¿½ï¿½Latexï¿½ï¿½ï¿½ï¿½ï¿½Å·ï¿½ï¿½
+			if ( (sp=rastparen(&subexpr,size,prevsp)) == NULL )//¹âÕ¤»¯LatexÖÐÀ¨ºÅ·ûºÅ
 				continue;
 		}
-		else //ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½Ö·ï¿½ï¿½ÎªÔ­ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Õ¤ï¿½ï¿½
+		else //Èç¹ûÊÇ·ÇÀ¨ºÅÐÎÊ½×Ö·û£¬³ÆÎªÔ­×Ó×Ö·û£¬²¢¹âÕ¤»¯
 		{
 			if ( !isthischar(*subexpr,SCRIPTS) )	/* scripts handled below */
 			{
@@ -7363,12 +7393,12 @@ subraster *rasterize ( char *expression, int size )
 					}		/* set back to text mode */
 					expression = endptr+1;		/* push expression past closing $ */
 				}
-				else//ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½Ö·ï¿½ï¿½ÎªÔ­ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Õ¤ï¿½ï¿½
+				else//Èç¹ûÊÇ·ÇÀ¨ºÅÐÎÊ½×Ö·û£¬³ÆÎªÔ­×Ó×Ö·û£¬²¢¹âÕ¤»¯
 				{
-					//ï¿½ï¿½ï¿½Æ±ï¿½ï¿½Ð²ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Ð¸ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó²ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½í¦Œí¹“ÐŸÞ¯ß½ï¿½Ê¶ï¿½ï¿½ï¿½Ö·ï¿½
+					//ÔÚÖÆ±íÖÐ²éÕÒÊÇ·ñ³öÏÖÓÐ¸Ã×Ö·û£¬Èç¹ûÓÐÖ±½Ó²éÑ¯µ½¸Ã×Ö·ûµÄÐÅÏ¢£¬·ñÔòµ±³É²»ÈÏÊ¶µÄ×Ö·û
 					if ( (leftsymdef=symdef=get_symdef(chartoken)) ==  NULL )/*mathchardef for token*//* lookup failed */
 					{
-						char literal[512] = "[?]";	//ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+						char literal[512] = "[?]";	//ÏÔÊ¾²»ÈÏÊ¶µÄÎÄ×Ö
 						int  oldfontnum = fontnum;	/* error display in default mode */
 						if ( msgfp!=NULL && msglevel >= 29 ) /* display unrecognized symbol*/
 						{
@@ -7393,7 +7423,7 @@ subraster *rasterize ( char *expression, int size )
 					}/*flush if rasterize fails*/
 					else /* --- check if we have special handler to process this token --- */
 					{
-						if ( symdef->handler != NULL )	//ï¿½Ð¶ï¿½symderfï¿½ï¿½ï¿½ï¿½ï¿½handlerï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ÎªNULLï¿½ï¿½ï¿½ï¿½ï¿½ÎªNULLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½â´¦ï¿½?ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó»ï¿½È¡ï¿½ï¿½Õ¤
+						if ( symdef->handler != NULL )	//ÅÐ¶ÏsymderfÀïÃæµÄhandler²ÎÊýÊÇ·ñÎªNULL£¬Èç¹û²»ÎªNULL£¬ÔòÐèÒªÌØÊâ´¦Àí£¬·ñÔòÖ±½Ó»ñÈ¡¹âÕ¤
 						{
 							int arg1=symdef->charnum, arg2=symdef->family, arg3=symdef->class;
 							//printf("\n%s\n",subexpr);
@@ -7402,7 +7432,7 @@ subraster *rasterize ( char *expression, int size )
 							strcpy(DataROI[Index_Data].substring, subexpr);
 							Index_Data++;
 							sp = (subraster *) (*(symdef->handler))(&expression,size,prevsp,arg1,arg2,arg3);
-							if ( (sp)==NULL) //ï¿½ï¿½ï¿½ï¿½void*ï¿½ï¿½Ýµï¿½Í¼ï¿½ï¿½ï¿½Õ¤
+							if ( (sp)==NULL) //·µ»Øvoid*Êý¾ÝµÄÍ¼Ïñ¹âÕ¤
 							{
 								continue;
 							}
@@ -7615,7 +7645,7 @@ subraster *rasterize_1 ( char *expression, int size )
 	double	oldunitlength = unitlength;	/* initial unitlength */
 	mathchardef *oldleftsymdef = leftsymdef; /* init oldleftsymdef */
 
-	//printf("\n         ï¿½á¹¹%d         \n", count__++);
+	//printf("\n         ½á¹¹%d         \n", count__++);
 
 	/* -------------------------------------------------------------------------
 	initialization
@@ -7692,13 +7722,13 @@ subraster *rasterize_1 ( char *expression, int size )
 		if ( *subexpr == '\000' )
 			break;
 
-		//=========================ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½Ç·ï¿½ï¿½Ç´ï¿½ï¿½ï¿½ï¿½ï¿½========================================
+		//=========================¼ì²é¸Ã×Ö·ûÊÇ·ñÊÇ´óÀ¨ºÅ========================================
 		if ( isbrace(subexpr,LEFTBRACES,1) )	/* got parenthesized subexpression */
 		{
-			if ( (sp=rastparen(&subexpr,size,prevsp)) == NULL )//ï¿½ï¿½Õ¤ï¿½ï¿½Latexï¿½ï¿½ï¿½ï¿½ï¿½Å·ï¿½ï¿½
+			if ( (sp=rastparen(&subexpr,size,prevsp)) == NULL )//¹âÕ¤»¯LatexÖÐÀ¨ºÅ·ûºÅ
 				continue;
 		}
-		else //ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½Ö·ï¿½ï¿½ÎªÔ­ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Õ¤ï¿½ï¿½
+		else //Èç¹ûÊÇ·ÇÀ¨ºÅÐÎÊ½×Ö·û£¬³ÆÎªÔ­×Ó×Ö·û£¬²¢¹âÕ¤»¯
 		{
 			if ( !isthischar(*subexpr,SCRIPTS) )	/* scripts handled below */
 			{
@@ -7730,12 +7760,12 @@ subraster *rasterize_1 ( char *expression, int size )
 					}		/* set back to text mode */
 					expression = endptr+1;		/* push expression past closing $ */
 				}
-				else//ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½Ö·ï¿½ï¿½ÎªÔ­ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½Õ¤ï¿½ï¿½
+				else//Èç¹ûÊÇ·ÇÀ¨ºÅÐÎÊ½×Ö·û£¬³ÆÎªÔ­×Ó×Ö·û£¬²¢¹âÕ¤»¯
 				{
-					//ï¿½ï¿½ï¿½Æ±ï¿½ï¿½Ð²ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Ð¸ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó²ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½í¦Œí¹“ÐŸÞ¯ß½ï¿½Ê¶ï¿½ï¿½ï¿½Ö·ï¿½
+					//ÔÚÖÆ±íÖÐ²éÕÒÊÇ·ñ³öÏÖÓÐ¸Ã×Ö·û£¬Èç¹ûÓÐÖ±½Ó²éÑ¯µ½¸Ã×Ö·ûµÄÐÅÏ¢£¬·ñÔòµ±³É²»ÈÏÊ¶µÄ×Ö·û
 					if ( (leftsymdef=symdef=get_symdef(chartoken)) ==  NULL )/*mathchardef for token*//* lookup failed */
 					{
-						char literal[512] = "[?]";	//ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+						char literal[512] = "[?]";	//ÏÔÊ¾²»ÈÏÊ¶µÄÎÄ×Ö
 						int  oldfontnum = fontnum;	/* error display in default mode */
 						if ( msgfp!=NULL && msglevel >= 29 ) /* display unrecognized symbol*/
 						{
@@ -7760,7 +7790,7 @@ subraster *rasterize_1 ( char *expression, int size )
 					}/*flush if rasterize fails*/
 					else /* --- check if we have special handler to process this token --- */
 					{
-						if ( symdef->handler != NULL )	//ï¿½Ð¶ï¿½symderfï¿½ï¿½ï¿½ï¿½ï¿½handlerï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ÎªNULLï¿½ï¿½ï¿½ï¿½ï¿½ÎªNULLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½â´¦ï¿½?ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó»ï¿½È¡ï¿½ï¿½Õ¤
+						if ( symdef->handler != NULL )	//ÅÐ¶ÏsymderfÀïÃæµÄhandler²ÎÊýÊÇ·ñÎªNULL£¬Èç¹û²»ÎªNULL£¬ÔòÐèÒªÌØÊâ´¦Àí£¬·ñÔòÖ±½Ó»ñÈ¡¹âÕ¤
 						{
 							int arg1=symdef->charnum, arg2=symdef->family, arg3=symdef->class;
 							//printf("\n%s\n",subexpr);
@@ -7769,7 +7799,7 @@ subraster *rasterize_1 ( char *expression, int size )
 							strcpy(DataROI[Index_Data].substring, subexpr);
 							Index_Data++;
 							sp = (subraster *) (*(symdef->handler))(&expression,size,prevsp,arg1,arg2,arg3);
-							if ( (sp)==NULL) //ï¿½ï¿½ï¿½ï¿½void*ï¿½ï¿½Ýµï¿½Í¼ï¿½ï¿½ï¿½Õ¤
+							if ( (sp)==NULL) //·µ»Øvoid*Êý¾ÝµÄÍ¼Ïñ¹âÕ¤
 							{
 								continue;
 							}
@@ -8035,6 +8065,10 @@ if ( sp != NULL )			/* succeeded or ignored \left. */
     sp = rastcat(sp,rp,3);		/* concat sp||rp and free sp,rp */
 /* --- back to caller --- */
 end_of_job:
+// huanwang
+  // dump subraster info
+  subrast_print ( sp );
+
   return ( sp );
 } /* --- end-of-function rastparen() --- */
 
@@ -8204,6 +8238,10 @@ subraster *rastlimits ( char **expression, int size, subraster *basesp )
 			fflush(msgfp);
 		}
 		scriptlevel--;			/*lastly, decrement subscript level*/
+
+		// huanwang
+  // dump subraster info
+    subrast_print ( scriptsp );
 
 	return ( scriptsp );
 } /* --- end-of-function rastlimits() --- */
@@ -8456,7 +8494,7 @@ if ( issup )				/* we have a superscript */
 if ( issub )				/* we have a subscript */
  rastput(rp,subsp->image,height-subht,0,1); /*in lower-left corner*/
 
-if(issup && issub)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç±ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç±ê¹¹ï¿½ÉµÄ½á¹¹
+if(issup && issub)//µ±´æÔÚÉÏÏÂ½Ç±êÊ±£¬ÐèÒªÏÈÉú³ÉÉÏÏÂ½Ç±ê¹¹³ÉµÄ½á¹¹
 {
 	if(supsp->symdef)
 	{
@@ -8469,7 +8507,7 @@ if(issup && issub)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç±ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï
 	DataROI[Index_Data].substring = str;
 	Index_Data++;
 
-	//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, 1, 0, supsp->image->width, supsp->image->height, rp->width, rp->height);
+	//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, 1, 0, supsp->image->width, supsp->image->height, rp->width, rp->height);
 	DataROI[Index_Data].substring = str;
 	DataROI[Index_Data].left = 0;
 	DataROI[Index_Data].top = 0;
@@ -8488,7 +8526,7 @@ if(issup && issub)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç±ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï
 		str1 = "Box";
 	}
 
-	//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str1, 0, rp->height - subsp->image->height, subsp->image->width, subsp->image->height, rp->width, rp->height);
+	//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str1, 0, rp->height - subsp->image->height, subsp->image->width, subsp->image->height, rp->width, rp->height);
 	DataROI[Index_Data].substring = str1;
 	DataROI[Index_Data].left = 0;
 	DataROI[Index_Data].top = rp->height - subsp->image->height;
@@ -8507,6 +8545,11 @@ free unneeded component subrasters and return final result to caller
 end_of_job:
   if ( issub ) delete_subraster(subsp);	/* free unneeded subscript */
   if ( issup ) delete_subraster(supsp);	/* and superscript */
+
+  // huanwang
+  // dump subraster info
+  subrast_print ( sp );
+
   return ( sp );
 } /* --- end-of-function rastscripts() --- */
 
@@ -8591,7 +8634,7 @@ subraster *rastdispmath ( char **expression, int size, subraster *sp )
 			DataROI[Index_Data].substring = str;
 			Index_Data++;
 
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,supsp->image->width)*0.5-0.5*supsp->image->width), 0, supsp->image->width, supsp->image->height, max2(sp->image->width, supsp->image->width), sp->image->height+supsp->image->height+1);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,supsp->image->width)*0.5-0.5*supsp->image->width), 0, supsp->image->width, supsp->image->height, max2(sp->image->width, supsp->image->width), sp->image->height+supsp->image->height+1);
 			DataROI[Index_Data].substring = str;
 			DataROI[Index_Data].left = max2(sp->image->width,supsp->image->width)*0.5-0.5*supsp->image->width;
 			DataROI[Index_Data].top = 0;
@@ -8609,7 +8652,7 @@ subraster *rastdispmath ( char **expression, int size, subraster *sp )
 			{
 				str = "Box";
 			}
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,supsp->image->width)*0.5-0.5*sp->image->width), supsp->image->height+1, sp->image->width, sp->image->height, max2(sp->image->width, supsp->image->width), sp->image->height+supsp->image->height+1);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,supsp->image->width)*0.5-0.5*sp->image->width), supsp->image->height+1, sp->image->width, sp->image->height, max2(sp->image->width, supsp->image->width), sp->image->height+supsp->image->height+1);
 			DataROI[Index_Data].substring = str;
 			DataROI[Index_Data].left = max2(sp->image->width,supsp->image->width)*0.5-0.5*sp->image->width;
 			DataROI[Index_Data].top = supsp->image->height+1;
@@ -8647,7 +8690,7 @@ subraster *rastdispmath ( char **expression, int size, subraster *sp )
 			DataROI[Index_Data].substring = str;
 			Index_Data++;
 
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,subsp->image->width)*0.5-0.5*sp->image->width), 0, sp->image->width, sp->image->height, max2(sp->image->width, subsp->image->width), sp->image->height+subsp->image->height+1);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,subsp->image->width)*0.5-0.5*sp->image->width), 0, sp->image->width, sp->image->height, max2(sp->image->width, subsp->image->width), sp->image->height+subsp->image->height+1);
 			DataROI[Index_Data].substring = str;
 			DataROI[Index_Data].left = max2(sp->image->width,subsp->image->width)*0.5-0.5*sp->image->width;
 			DataROI[Index_Data].top = 0;
@@ -8665,7 +8708,7 @@ subraster *rastdispmath ( char **expression, int size, subraster *sp )
 			{
 				str = "Box";
 			}
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,subsp->image->width)*0.5-0.5*subsp->image->width), sp->image->height+1, subsp->image->width, subsp->image->height, max2(sp->image->width, subsp->image->width), sp->image->height+subsp->image->height+1);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, (int)(max2(sp->image->width,subsp->image->width)*0.5-0.5*subsp->image->width), sp->image->height+1, subsp->image->width, subsp->image->height, max2(sp->image->width, subsp->image->width), sp->image->height+subsp->image->height+1);
 			DataROI[Index_Data].substring = str;
 			DataROI[Index_Data].left = max2(sp->image->width,subsp->image->width)*0.5-0.5*subsp->image->width;
 			DataROI[Index_Data].top = sp->image->height+1;
@@ -8691,6 +8734,10 @@ subraster *rastdispmath ( char **expression, int size, subraster *sp )
 	free unneeded component subrasters and return final result to caller
 	-------------------------------------------------------------------------- */
 	end_of_job:
+
+// huanwang
+  // dump subraster info
+    subrast_print ( sp );
 
 	return ( sp );
 } /* --- end-of-function rastdispmath() --- */
@@ -8942,6 +8989,11 @@ if ( sp != NULL )			/* succeeded or ignored \left. */
 /* --- back to caller --- */
 end_of_job:
   isdelimscript = isrightscript;	/* signal if right delim scripted */
+
+  // huanwang
+  // dump subraster info
+  subrast_print ( sp );
+
   return ( sp );
 } /* --- end-of-function rastleft() --- */
 
@@ -8979,6 +9031,10 @@ subraster /* *rasterize(),*/ *sp=NULL;	/*rasterize \right subexpr's*/
     {
       isreplaceleft = 1;		/* set flag to replace left half*/
     }
+    // huanwang
+  // dump subraster info
+subrast_print ( sp );
+
 return ( sp );
 } /* --- end-of-function rastright() --- */
 
@@ -9098,6 +9154,10 @@ end_of_job:
       sp->baseline = min2(newht-1,newht/2+5); /* guess new baseline */
       isreplaceleft = 1;		/* set flag to replace left half*/
       *expression += strlen(*expression); } /* and push to terminating null*/
+      // huanwang
+  // dump subraster info
+  subrast_print ( sp );
+
   return ( sp );
 } /* --- end-of-function rastmiddle() --- */
 
@@ -9476,6 +9536,10 @@ if ( rightsp != NULL )			/* we have a right half after fill */
     spacesp->type = blanksignal;	/* need to propagate blanks */
     *expression += strlen((*expression)); } /* push expression to its null */
 end_of_job:
+// huanwang
+  // dump subraster info
+  subrast_print ( spacesp );
+
   return ( spacesp );
 } /* --- end-of-function rastspace() --- */
 
@@ -9639,6 +9703,10 @@ if ( supsp != NULL )			/* stack superscript above arrow */
   ==   NULL ) goto end_of_job;		/* quit if failed */
 /* --- return arrow (or NULL) to caller --- */
 end_of_job:
+// huanwang
+  // dump subraster info
+  subrast_print ( arrowsp );
+
   return ( arrowsp );
 } /* --- end-of-function rastarrow() --- */
 
@@ -9740,6 +9808,10 @@ if ( subsp != NULL )			/* cat subscript to right of arrow */
 /* --- return arrow (or NULL) to caller --- */
 end_of_job:
   arrowsp->baseline = height-1;		/* reset arrow baseline to bottom */
+  // huanwang
+  // dump subraster info
+  subrast_print ( arrowsp );
+
   return ( arrowsp );
 } /* --- end-of-function rastuparrow() --- */
 
@@ -9855,6 +9927,10 @@ construct composite overlay
 -------------------------------------------------------------------------- */
 overlaysp = rastcompose(sp1,sp2,offset2,isalign,3);
 end_of_job:
+// huanwang
+  // dump subraster info
+  subrast_print ( overlaysp );
+
   return ( overlaysp );
 } /* --- end-of-function rastoverlay() --- */
 
@@ -9938,7 +10014,7 @@ subraster *rastfrac ( char **expression, int size, subraster *basesp,
 		{
 			str = "Box";
 		}
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, 0 , 0, numsp->image->width, numsp->image->height, numsp->image->width, numsp->image->height);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, 0 , 0, numsp->image->width, numsp->image->height, numsp->image->width, numsp->image->height);
 		DataROI[Index_Data].substring = str;
 		DataROI[Index_Data].left = 0;
 		DataROI[Index_Data].top = 0;
@@ -9989,7 +10065,7 @@ subraster *rastfrac ( char **expression, int size, subraster *basesp,
 		{
 			str = "Box";
 		}
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, 0 , 0, densp->image->width, densp->image->height, densp->image->width, densp->image->height);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, 0 , 0, densp->image->width, densp->image->height, densp->image->width, densp->image->height);
 		DataROI[Index_Data].substring = str;
 		DataROI[Index_Data].left = 0;
 		DataROI[Index_Data].top = 0;
@@ -10039,7 +10115,7 @@ subraster *rastfrac ( char **expression, int size, subraster *basesp,
 	{
 		str = "Box";
 	}
-	//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, max2( 0.5*numsp->image->width, 0.5*densp->image->width) - 0.5*numsp->image->width , 0, numsp->image->width, numsp->image->height, max2(numsp->image->width, densp->image->width), densp->image->height + numsp->image->height + 5);
+	//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, max2( 0.5*numsp->image->width, 0.5*densp->image->width) - 0.5*numsp->image->width , 0, numsp->image->width, numsp->image->height, max2(numsp->image->width, densp->image->width), densp->image->height + numsp->image->height + 5);
 	DataROI[Index_Data].substring = "left";
 	DataROI[Index_Data].left = max2(0.5*numsp->image->width, 0.5*densp->image->width) - 0.5*numsp->image->width;
 	DataROI[Index_Data].top = 0;
@@ -10057,7 +10133,7 @@ subraster *rastfrac ( char **expression, int size, subraster *basesp,
 	{
 		str1 = "Box";
 	}
-	//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str1, max2(0.5*numsp->image->width, 0.5*densp->image->width) - 0.5*densp->image->width , numsp->image->height + 3, densp->image->width, densp->image->height, max2(numsp->image->width, densp->image->width), densp->image->height + numsp->image->height + 5);
+	//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str1, max2(0.5*numsp->image->width, 0.5*densp->image->width) - 0.5*densp->image->width , numsp->image->height + 3, densp->image->width, densp->image->height, max2(numsp->image->width, densp->image->width), densp->image->height + numsp->image->height + 5);
 	DataROI[Index_Data].substring = "right";
 	DataROI[Index_Data].left = max2(0.5*numsp->image->width, 0.5*densp->image->width) - 0.5*densp->image->width;
 	DataROI[Index_Data].top = numsp->image->height + 5;
@@ -10112,6 +10188,10 @@ subraster *rastfrac ( char **expression, int size, subraster *basesp,
 			if ( fracsp != NULL )		/* have a constructed raster */
 				type_raster(fracsp->image,msgfp);
 		} /* display constructed raster */
+
+		// huanwang
+  // dump subraster info
+  subrast_print ( fracsp );
 
   return ( fracsp );
 } /* --- end-of-function rastfrac() --- */
@@ -10185,6 +10265,10 @@ relsp->size = size;			/* propagate font size forward */
 return final result to caller
 -------------------------------------------------------------------------- */
 end_of_job:
+// huanwang
+  // dump subraster info
+  subrast_print ( relsp );
+
   return ( relsp );
 } /* --- end-of-function rastackrel() --- */
 
@@ -10306,7 +10390,7 @@ subraster *rastmathfunc ( char **expression, int size, subraster *basesp,
 		DataROI[Index_Data].substring = str1;
 		Index_Data++;
 
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str1, (width - funcsp->image->width)/2, 0, funcsp->image->width, funcsp->image->height, width, height);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str1, (width - funcsp->image->width)/2, 0, funcsp->image->width, funcsp->image->height, width, height);
 		DataROI[Index_Data].substring = str1;
 		DataROI[Index_Data].left = (width - funcsp->image->width)/2;
 		DataROI[Index_Data].top = 0;
@@ -10317,7 +10401,7 @@ subraster *rastmathfunc ( char **expression, int size, subraster *basesp,
 		Index_Data++;
 
 
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", "Box", (width - limsp->image->width)/2 , funcsp->image->height+vspace, limsp->image->width, limsp->image->height, width, height);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", "Box", (width - limsp->image->width)/2 , funcsp->image->height+vspace, limsp->image->width, limsp->image->height, width, height);
 		DataROI[Index_Data].substring = "Box";
 		DataROI[Index_Data].left = (width-limsp->image->width)/2;
 		DataROI[Index_Data].top = funcsp->image->height+vspace;
@@ -10347,6 +10431,10 @@ subraster *rastmathfunc ( char **expression, int size, subraster *basesp,
 	return final result to caller
 	-------------------------------------------------------------------------- */
 	end_of_job:
+
+	// huanwang
+  // dump subraster info
+    subrast_print ( mathfuncsp );
 
 	return ( mathfuncsp );
 } /* --- end-of-function rastmathfunc() --- */
@@ -10449,7 +10537,7 @@ subraster *rastsqrt ( char **expression, int size, subraster *basesp,
 
 	if(rootsp == NULL)
 	{
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", "sq_move", sqrtwidth-subwidth-1 , overspace, subwidth, subheight, sqrtwidth, sqrtheight);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", "sq_move", sqrtwidth-subwidth-1 , overspace, subwidth, subheight, sqrtwidth, sqrtheight);
 		if(subsp->symdef)
 		{
 			if(subsp->symdef->symbol)
@@ -10474,7 +10562,7 @@ subraster *rastsqrt ( char **expression, int size, subraster *basesp,
 		DataROI[Index_Data].Box_height = sqrtheight;
 		Index_Data++;
 
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", "sq_move", 0 , 0, subwidth-1, subheight-1, sqrtwidth-1, sqrtheight-1);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", "sq_move", 0 , 0, subwidth-1, subheight-1, sqrtwidth-1, sqrtheight-1);
 		DataROI[Index_Data].substring = "Box";
 		DataROI[Index_Data].left = 0;
 		DataROI[Index_Data].top = 0;
@@ -10517,7 +10605,7 @@ subraster *rastsqrt ( char **expression, int size, subraster *basesp,
 			{
 				str = "Box";
 			}
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", "sq_move", max2(0,surdwidth-rootwidth-2-size), 0, (int)(rootwidth*0.75), (int)(rootheight*0.75), fullwidth, fullheight);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", "sq_move", max2(0,surdwidth-rootwidth-2-size), 0, (int)(rootwidth*0.75), (int)(rootheight*0.75), fullwidth, fullheight);
 			DataROI[Index_Data].substring = str;// strlen(rootarg) == 1 ? str : "end";// str;
 			DataROI[Index_Data].left = max2(0,surdwidth-rootwidth-2-size);
 			DataROI[Index_Data].top = 0;
@@ -10527,7 +10615,7 @@ subraster *rastsqrt ( char **expression, int size, subraster *basesp,
 			DataROI[Index_Data].Box_height = fullheight;
 			Index_Data++;
 
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", "sq_move", sqrtwidth - subwidth - 2 , sqrtheight - subheight - 1, subwidth, subheight, fullwidth, fullheight);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", "sq_move", sqrtwidth - subwidth - 2 , sqrtheight - subheight - 1, subwidth, subheight, fullwidth, fullheight);
 			DataROI[Index_Data].substring = "Box";
 			DataROI[Index_Data].left = fullwidth - subwidth - 2;
 			DataROI[Index_Data].top = fullheight - subheight - 1;
@@ -10560,6 +10648,10 @@ subraster *rastsqrt ( char **expression, int size, subraster *basesp,
 	-------------------------------------------------------------------------- */
 	end_of_job:
 		if ( subsp != NULL ) delete_subraster(subsp); /* free unneeded subexpr */
+
+		// huanwang
+  // dump subraster info
+    subrast_print ( sqrtsp );
 
 	return ( sqrtsp );
 } /* --- end-of-function rastsqrt() --- */
@@ -10681,6 +10773,11 @@ return final result to caller
 end_of_job:
   if ( accsubsp != NULL )		/* initialize subraster parameters */
     accsubsp->size = size;		/* propagate font size forward */
+
+  // huanwang
+  // dump subraster info
+  subrast_print ( accsubsp );
+
   return ( accsubsp );
 } /* --- end-of-function rastaccent() --- */
 
@@ -10824,6 +10921,12 @@ end_of_job:
   mathsmashmargin = SMASHMARGIN;	/* this one probably not necessary */
   if ( istext && fontsp!=NULL )		/* raster contains text mode font */
     fontsp->type = blanksignal;		/* signal nosmash */
+
+    // huanwang
+  // dump subraster info
+  subrast_print ( fontsp );
+
+
   return ( fontsp );			/* chars rendered in font */
 } /* --- end-of-function rastfont() --- */
 
@@ -11056,6 +11159,11 @@ if ( msgfp!=NULL && msglevel>=99 )
 sp = rasterize(subexpr,size);		/* rasterize subexpr */
 end_of_job:
   blevel--;				/* decrement \begin nesting level */
+
+   // huanwang
+  // dump subraster info
+  subrast_print ( sp );
+
   return ( sp );			/* back to caller with sp or NULL */
 } /* --- end-of-function rastbegin() --- */
 
@@ -11613,7 +11721,7 @@ Macros to determine extra raster space required for vline/hline
 	arrayrp = arraysp->image;		/* raster embedded in subraster */
 
 
-	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½Ý´æ´¢ï¿½ï¿½ï¿½ï¿½
+	//½«´óÀ¨ºÅÄÚµÄÄÚÈÝ´æ´¢ÆðÀ´
 	for( irow = 0; irow < nrows; irow++)
 	{
 		subraster *tsp = toksp[irow];	/* token that belongs in this cell */
@@ -11633,7 +11741,7 @@ Macros to determine extra raster space required for vline/hline
 		{
 			str = "Box";
 		}
-		//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, 0, 0, toksp[0]->image->width, toksp[0]->image->height, toksp[0]->image->width, toksp[0]->image->height);
+		//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, 0, 0, toksp[0]->image->width, toksp[0]->image->height, toksp[0]->image->width, toksp[0]->image->height);
 		DataROI[Index_Data].substring = str;
 		DataROI[Index_Data].left = 0;
 		DataROI[Index_Data].top = 0;
@@ -11648,33 +11756,33 @@ Macros to determine extra raster space required for vline/hline
 	}
 	else if(count_all > 1)
 	{
-		for( irow = 0; irow < nrows - 1; irow++)//Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½Ð¿ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½ï¿½
+		for( irow = 0; irow < nrows - 1; irow++)//Ñ­»·ËùÓÐ¿ÉÄÜµÄÐÐÊý
 		{
 			subraster *tsp = toksp[irow];
 			subraster *tsp_ = toksp[irow+1];
 
-			//ï¿½Ï²ï¿½ï¿½Ö¿ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½
+			//ÉÏ²¿·Ö¿éµÄÆðÊ¼µã×ø±ê
 			//left_1 = (width - tsp->image->width)*0.5;
 			left_1 = 0;
 			top_1 = 0;
-			for(icol = 0; icol < irow; icol++)//ï¿½Òµï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ö®Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½Ü¸ß¶Èºï¿½
+			for(icol = 0; icol < irow; icol++)//ÕÒµ½µ±Ç°ÐÐÖ®Ç°ËùÓÐÐÐµÄ×Ü¸ß¶ÈºÍ
 			{
 				top_1 = top_1 + toksp[icol]->image->height;
 			}
 			top_1 = top_1 + irow * 2;
 
 
-			//ï¿½Â²ï¿½ï¿½Ö¿ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½
+			//ÏÂ²¿·Ö¿éµÄÆðÊ¼µã×ø±ê
 			//left_2 = (width - tsp_->image->width)*0.5;
 			left_2 = 0;
 			top_2 = 0;
-			for(icol = 0; icol <= irow; icol++)//ï¿½Òµï¿½ï¿½ï¿½Ç°ï¿½ï¿½Ö®Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½Ü¸ß¶Èºï¿½
+			for(icol = 0; icol <= irow; icol++)//ÕÒµ½µ±Ç°ÐÐÖ®Ç°ËùÓÐÐÐµÄ×Ü¸ß¶ÈºÍ
 			{
 				top_2 = top_2 + toksp[icol]->image->height;
 			}
 			top_2 = top_2 + (irow + 1) * 2;
 
-			//ï¿½Ï²ï¿½ï¿½ï¿½Ä´ï¿½Ð¡
+			//ºÏ²¢¿éµÄ´óÐ¡
 			Box_width = width;
 			Box_height = top_2 + tsp_->image->height;
 
@@ -11695,7 +11803,7 @@ Macros to determine extra raster space required for vline/hline
 
 			if(irow == 0)
 			{
-				//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, left_1, top_1, tsp->image->width, tsp->image->height, Box_width, Box_height);
+				//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, left_1, top_1, tsp->image->width, tsp->image->height, Box_width, Box_height);
 				DataROI[Index_Data].substring = str;
 				DataROI[Index_Data].left = left_1;
 				DataROI[Index_Data].top = top_1;
@@ -11707,7 +11815,7 @@ Macros to determine extra raster space required for vline/hline
 			}
 			else
 			{
-				//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str, 0, 0, Box_width, top_1 + tsp->image->height, Box_width, Box_height);
+				//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str, 0, 0, Box_width, top_1 + tsp->image->height, Box_width, Box_height);
 				DataROI[Index_Data].substring = str;
 				DataROI[Index_Data].left = 0;
 				DataROI[Index_Data].top = 0;
@@ -11731,7 +11839,7 @@ Macros to determine extra raster space required for vline/hline
 			{
 				str1 = "part4";
 			}
-			//printf("%s     ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½:(%d, %d)    %d  %d  %d  %d\n", str1, left_2, top_2, tsp_->image->width, tsp_->image->height, Box_width, Box_height);
+			//printf("%s     ×ó±ß ×ø±ê:(%d, %d)    %d  %d  %d  %d\n", str1, left_2, top_2, tsp_->image->width, tsp_->image->height, Box_width, Box_height);
 			DataROI[Index_Data].substring = str1;
 			DataROI[Index_Data].left = left_2;
 			DataROI[Index_Data].top = top_2;
@@ -11835,6 +11943,10 @@ Macros to determine extra raster space required for vline/hline
 					delete_subraster(toksp[ntokens]); /* then free it */
 
 	/* --- return final result to caller --- */
+	 // huanwang
+  // dump subraster info
+    subrast_print ( arraysp );
+
 	return ( arraysp );
 } /* --- end-of-function rastarray() --- */
 
@@ -12055,6 +12167,10 @@ return picture constructed from pic_elements to caller
 end_of_job:
   workingbox = oldworkingbox;		/* restore original working box */
   workingparam = oldworkingparam;	/* restore original working param */
+
+   // huanwang
+  // dump subraster info
+    subrast_print ( picturesp );
   return ( picturesp );			/* return our picture to caller */
 } /* --- end-of-function rastpicture() --- */
 
@@ -12183,6 +12299,10 @@ return constructed line to caller
 end_of_job:
   if ( workingparam != NULL )		/* caller wants origin */
     *workingparam = origin;		/* return origin corner to caller */
+
+     // huanwang
+  // dump subraster info
+  subrast_print ( linesp );
   return ( linesp );			/* return line to caller */
 } /* --- end-of-function rastline() --- */
 
@@ -12279,6 +12399,9 @@ rule_raster ( rulesp->image,		/* embedded raster image */
 return constructed rule to caller
 -------------------------------------------------------------------------- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( rulesp );
   return ( rulesp );			/* return rule to caller */
 } /* --- end-of-function rastrule() --- */
 
@@ -12395,6 +12518,10 @@ return constructed ellipse to caller
 end_of_job:
   if ( workingparam != NULL )		/* caller wants origin */
     *workingparam = origin;		/* return center origin to caller */
+
+     // huanwang
+  // dump subraster info
+  subrast_print ( circsp );
   return ( circsp );			/* return ellipse to caller */
 } /* --- end-of-function rastcircle() --- */
 
@@ -12519,6 +12646,10 @@ return constructed bezier to caller
 end_of_job:
   if ( workingparam != NULL )		/* caller wants origin */
     *workingparam = origin;		/* return center origin to caller */
+
+     // huanwang
+  // dump subraster info
+  subrast_print ( bezsp );
   return ( bezsp );			/* return bezier to caller */
 } /* --- end-of-function rastbezier() --- */
 
@@ -12585,6 +12716,9 @@ raisesp->baseline += lift;		/* new baseline (no height checks) */
 rastlift = lift;			/* set global to signal adjustment */
 /* --- return raised subexpr to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( raisesp );
   return ( raisesp );			/* return raised subexpr to caller */
 } /* --- end-of-function rastraise() --- */
 
@@ -12698,6 +12832,9 @@ if ( rotrp != NULL )			/* rotated raster constructed okay */
    rotsp->baseline = baseline; }	/* set baseline as calculated above*/
 /* --- return rotated subexpr to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( rotsp );
   return ( rotsp );			/*return rotated subexpr to caller*/
 } /* --- end-of-function rastrotate() --- */
 
@@ -12774,6 +12911,9 @@ if ( baseline > 0 ) baseline += 1;	/* adjust for no descenders */
 magsp->baseline = baseline;		/*reset baseline of magnified image*/
 /* --- return magnified subexpr to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( magsp );
   return ( magsp );			/*back to caller with magnified expr*/
 } /* --- end-of-function rastmagnify() --- */
 
@@ -12853,6 +12993,9 @@ if ( axis == 2 )			/* for vertical reflection */
 refsp->baseline = baseline;		/* reset baseline of reflected image*/
 /* --- return reflected subexpr to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( refsp );
   return ( refsp );			/*back to caller with reflected expr*/
 } /* --- end-of-function rastreflect() --- */
 
@@ -12964,6 +13107,9 @@ else
   framesp->baseline = (framesp->image)->height - 1; /* set at bottom */
 /* --- return framed subexpr to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( framesp );
   return ( framesp );			/* return framed subexpr to caller */
 } /* --- end-of-function rastfbox() --- */
 
@@ -13071,6 +13217,9 @@ Rasterize constructed subexpression
 inputsp = rasterize(subexpr,size);	/* rasterize subexpression */
 /* --- return input image to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( inputsp );
   return ( inputsp );			/* return input image to caller */
 } /* --- end-of-function rastinput() --- */
 
@@ -13265,6 +13414,9 @@ rasterize_counter:
   countersp = rasterize(text,size);	/* rasterize counter subexpression */
 /* --- return counter image to caller --- */
 /*end_of_job:*/
+ // huanwang
+  // dump subraster info
+  subrast_print ( countersp );
   return ( countersp );			/* return counter image to caller */
 } /* --- end-of-function rastcounter() --- */
 
@@ -13316,6 +13468,9 @@ sprintf(subexpr,"%d",value);		/* ascii version of value */
 evalsp = rasterize(subexpr,size);	/* rasterize evaluated expression */
 /* --- return evaluated expression raster to caller --- */
 end_of_job:
+ // huanwang
+  // dump subraster info
+  subrast_print ( evalsp );
   return ( evalsp );			/* return evaluated expr to caller */
 } /* --- end-of-function rasteval() --- */
 
@@ -13377,6 +13532,9 @@ strcat(today,"}");			/* terminate \text{} braces */
 todaysp = rasterize(today,size);	/* rasterize timestamp */
 /* --- return timestamp raster to caller --- */
 /*end_of_job:*/
+ // huanwang
+  // dump subraster info
+  subrast_print ( todaysp );
   return ( todaysp );			/* return timestamp to caller */
 } /* --- end-of-function rasttoday() --- */
 
@@ -13445,6 +13603,9 @@ calstr = calendar(year,month,day);		/* get calendar string */
 calendarsp = rasterize(calstr,size);	/* rasterize calendar string */
 /* --- return calendar raster to caller --- */
 /*end_of_job:*/
+ // huanwang
+  // dump subraster info
+  subrast_print ( calendarsp );
   return ( calendarsp );		/* return calendar to caller */
 } /* --- end-of-function rastcalendar() --- */
 
@@ -13542,6 +13703,9 @@ rasterize_environ:
   environsp = rasterize(environstr,size); /* rasterize environment string */
 /* --- return environment raster to caller --- */
 /*end_of_job:*/
+ // huanwang
+  // dump subraster info
+  subrast_print ( environsp );
   return ( environsp );			/* return environment to caller */
 } /* --- end-of-function rastenviron() --- */
 
@@ -13608,6 +13772,9 @@ if ( imsg == refmsgnum) {		/* urlncmp() failed to validate */
 messagesp = rasterize(msg,size);	/* rasterize message string */
 /* --- return message raster to caller --- */
 /*end_of_job:*/
+ // huanwang
+  // dump subraster info
+  subrast_print ( messagesp );
   return ( messagesp );			/* return message to caller */
 } /* --- end-of-function rastmessage() --- */
 
@@ -13649,6 +13816,9 @@ if ( nargs != NOVALUE			/* not unspecified */
     *expression = texsubexpr(*expression,subexpr,0,"{","}",0,0); /*flush arg*/
 /* --- return null ptr to caller --- */
 /*end_of_job:*/
+ // huanwang
+  // dump subraster info
+  subrast_print ( noopsp );
   return ( noopsp );			/* return NULL ptr to caller */
 } /* --- end-of-function rastnoop() --- */
 
@@ -16686,8 +16856,8 @@ void free_memory(struct Data_Info* DataROI)
 	free(DataROI);
 }
 
+//#ifdef DEBUG_ONLY_MIMETEX
 #ifdef DEBUG
-
 /* --- entry point --- */
 int	main ( int argc, char *argv[]
 	    , char *envp[]
@@ -16699,6 +16869,15 @@ struct Result_Data*	main_func ( int argc, char *argv[]
 	)
 #endif // DEBUG
 {
+
+
+/* --- set constants --- */
+	argc = 4;		/* count of args supplied to main() */
+
+	/* --- set argv[]'s not computable at load time --- */
+	argv[1] = "-e";
+	argv[2] = "test.gif";		/* args are -e gifFileName */
+	argv[3] = "\\int_{-a}^{a}x=1";		/* and now  -e gifFileName expression */
 
 	ffpp = fopen("./test.txt", "w");
 
@@ -17375,7 +17554,7 @@ if ( !isdumpimage && !ispbmpgm )	/* don't mix ascii with image dump */
 		}
 	}
 
-	printf("\n\n==========================ï¿½æ´¢ï¿½ï¿½Ý½á¹¹===========================\n");
+	printf("\n\n==========================´æ´¢Êý¾Ý½á¹¹===========================\n");
 	for(ii = 0; ii < Index_Data; ii++)
 	{
 		printf("%s  ", DataROI[ii].substring);
@@ -17385,8 +17564,6 @@ if ( !isdumpimage && !ispbmpgm )	/* don't mix ascii with image dump */
 		}
 		printf("\n");
 	}
-
-	Result_Out->Data_Info_Num=Index_Data;
 
 	//free_memory(DataROI);
 
@@ -17549,7 +17726,7 @@ if ( (!isquery||isqlogging) || msglevel >= 99 )	/*command line or debuging*/
 	type_bytemap(bytemap_raster,grayscale,
         raster_width,raster_height,msgfp); }
     /* --- colormap image --- */
-    fprintf(msgfp,"\nHex dump of colormapResult_Out indexes, "  /* emit colormap */
+    fprintf(msgfp,"\nHex dump of colormap indexes, "  /* emit colormap */
       "asterisks denote \"black\" bytes (index=%d)...\n",ncolors-1);
     type_bytemap(colormap_raster,ncolors,
     raster_width,raster_height,msgfp);
@@ -17709,6 +17886,49 @@ end_of_job:
 	//Result_Out->ImageData = bytemap_raster;
 
 #ifdef DEBUG
+	char parse_result[4096], line_str[1024];
+
+	struct Data_Info *DataROI = Result_Out->Location;
+
+
+
+	int first_write = 1;
+
+	char last_string[1024];
+
+	for (ii = 0; ii < CHAR_LENGTH_MATH; ii++)
+	{
+		if (DataROI[ii].left > -1 && DataROI[ii].left < 10000)
+		{
+			if (first_write)
+			{
+				sprintf(parse_result, "%s,", DataROI[ii].substring);
+
+				strcpy(last_string, DataROI[ii].substring);
+
+				first_write = 0;
+			}
+			else
+			{
+				// check if neighbours are same with symbol string,
+				// then ignore the later one
+				//if (!strcmp(last_string, DataROI[ii].substring))
+				//	continue;
+
+				sprintf(line_str, "%s,", DataROI[ii].substring);
+				strcat(parse_result, line_str);
+
+				strcpy(last_string, DataROI[ii].substring);
+			}
+
+			sprintf(line_str, "%d %d %d %d %d %d;", DataROI[ii].left, DataROI[ii].top, DataROI[ii].width, DataROI[ii].height, DataROI[ii].Box_width, DataROI[ii].Box_height);
+			strcat(parse_result, line_str);
+		}
+	}
+
+	printf("%s\n", parse_result);
+
+
     return 0;
 #else
 	return Result_Out;
@@ -17781,7 +18001,7 @@ char*  CreateGifFromEq ( char *expression, char *gifFileName )
 
 	char last_string[1024];
 
-	for(ii = 0; ii < symbols_data->Data_Info_Num; ii++)
+	for(ii = 0; ii < CHAR_LENGTH_MATH; ii++)
 	{
         if(DataROI[ii].left > -1 && DataROI[ii].left < 10000)
         {
@@ -17842,7 +18062,6 @@ struct Result_Data* CreateGifFromEq ( char *expression, char *gifFileName )
 } /* --- end-of-function CreateGifFromEq() --- */
 #endif
 #endif
-
 /* ==========================================================================
  * Function:	ismonth ( char *month )
  * Purpose:	returns 1 if month contains current month "jan"..."dec".
